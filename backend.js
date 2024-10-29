@@ -2,7 +2,8 @@ const express = require('express')
 const cors = require('cors')
 const mongoose = require('mongoose')
 const uniqueValidator = require('mongoose-unique-validator')
-
+const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
 const app = express()
 app.use(express.json())
 app.use(cors())
@@ -41,14 +42,42 @@ app.post('/filmes', async (req, res) => {
 })
 
 app.post('/signup', async (req, res) => {
+    try {
+        const login = req.body.login
+        const password = req.body.password
+        const senhaCriptografada = await bcrypt.hash(password, 10)
+        const usuario = new Usuario({login: login, password: senhaCriptografada})
+        const respMongo = await usuario.save()
+        console.log(respMongo)
+        res.status(201).end()
+    }
+    catch(e) {
+        console.log(e)
+        res.status(409).end()
+    }
+})
+app.post ('/login', async (req, res) => {
+    //pega os dados que o usuário digitou
     const login = req.body.login
     const password = req.body.password
-    const usuario = new Usuario({login: login, password: password})
-    const respMongo = await usuario.save()
-    console.log(respMongo)
-    res.end()
+    //verifica se o usuário existe lá no banco
+    const usuarioExiste = await Usuario.findOne({login: login})
+    if (!usuarioExiste) {
+        return res.status(401).json({mensagem: "login inválido"})
+    }
+    //se o usuário existe, verificamos a senha
+    const senhaValida = await bcrypt.compare(password, usuarioExiste.password)
+    if (!senhaValida) {
+        return res.status(401).json({mensagem: "senha inválida"})
+    }
+    //aqui vamos gerar o token
+    const token = jwt.sign(
+        {login: login},
+        "chave-temporaria",
+        {expiresIn: "1h"}
+    )
+    res.status(200).json({token: token})
 })
-
 
 app.listen (3000, () => {
     try {
