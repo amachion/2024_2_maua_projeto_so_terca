@@ -40,13 +40,54 @@ async function cadastrarFilme() {
         listarFilmes(filmes)
     }
     else {
-        let alert = document.querySelector('.alert')
-        alert.classList.add('show')
-        alert.classList.remove('d-none')
-        setTimeout(() => {
-            alert.classList.remove('show')
-            alert.classList.add('d-none')
-        }, 2000)
+        exibirAlerta ('.alert-filme', "Preencha todos os campos", ['show', 'alert-danger'], ['d-none'], 2000)
     }
 }
+async function cadastrarUsuario() {
+    let usuarioCadastroInput = document.querySelector('#usuarioCadastroInput')
+    let passwordCadastroInput = document.querySelector('#passwordCadastroInput')
+    let usuarioCadastro = usuarioCadastroInput.value
+    let passwordCadastro = passwordCadastroInput.value
+    if (usuarioCadastro && passwordCadastro) {
+        try {
+            const cadastroEndpoint = '/signup'
+            const URLcompleta = `${protocolo}${baseURL}${cadastroEndpoint}`
+            await axios.post(
+                URLcompleta, 
+                {login: usuarioCadastro, password: passwordCadastro})
+            usuarioCadastroInput.value = ""
+            passwordCadastroInput.value = ""
+            
+            exibirAlerta ('.alert-modal-cadastro', "Usuário cadastrado com sucesso!", ['show', 'alert-success'], ['d-none'], 2000)
 
+            ocultarModal('#modalCadastro', 2000)
+
+        }
+        catch (e) {
+            usuarioCadastroInput.value = ""
+            passwordCadastroInput.value = ""
+            exibirAlerta ('.alert-modal-cadastro', "Não foi possível cadastrar", ['show', 'alert-danger'], ['d-none'], 2000)
+            
+            ocultarModal('#modalCadastro', 2000)
+        }
+    }   
+    else {
+        exibirAlerta ('.alert-modal-cadastro', "Preencha todos os campos", ['show', 'alert-danger'], ['d-none'], 2000)
+    }
+}
+function exibirAlerta (seletor, innerHTML, classesToAdd, classesToRemove, timeout) {
+    let alert = document.querySelector(seletor)
+    alert.innerHTML = innerHTML
+    alert.classList.add (...classesToAdd)
+    alert.classList.remove(...classesToRemove)
+    setTimeout (() => {
+        alert.classList.remove (...classesToAdd)
+        alert.classList.add (...classesToRemove)
+    }, timeout)
+}
+function ocultarModal(seletor, timeout) {
+    setTimeout (() => {
+        let modal = bootstrap.Modal.getInstance(document.querySelector(seletor))
+        modal.hide()
+    }, timeout)
+}
